@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dispensa</title>
+    
+    <!-- Configurações PWA (Para parecer App) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Dispensa">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Animações suaves */
+        .fade-in { animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .scale-in { animation: scaleIn 0.15s ease-out; }
+        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-32 overscroll-none">
+
+    <div id="app" class="max-w-md mx-auto">
+        <div class="flex h-screen items-center justify-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+        </div>
+    </div>
+
+    <!-- Contentor para Modais -->
+    <div id="modal-container"></div>
+
+    <!-- Scripts do Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc, deleteDoc, writeBatch, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // --- ATENÇÃO RICARDO: COLA AQUI A TUA CONFIGURAÇÃO DO FIREBASE ---
+        const firebaseConfig = {
+  apiKey: "AIzaSyCj1DvIHJTU6nYimJnOJYs5KgHX0_M37vw",
+  authDomain: "dispensahome-40379.firebaseapp.com",
+  projectId: "dispensahome-40379",
+  storageBucket: "dispensahome-40379.firebasestorage.app",
+  messagingSenderId: "834278967482",
+  appId: "1:834278967482:web:8b53dce26d3e4a3f43da83",
+  measurementId: "G-6Q0LRLTWT8"
+};
+
+        // Fallback para usar configuração do sistema se a tua estiver vazia (apenas para teste)
+        const activeConfig = Object.keys(firebaseConfig).length > 0 ? firebaseConfig : JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'minha-casa'; 
+
+        const app = initializeApp(activeConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- ESTADO DA APLICAÇÃO ---
+        const state = {
+            user: null,
+            items: [],
+            stores: [],
+            loading: true,
+            lastUpdate: null,
+            currentView: 'dashboard', 
+            isEditMode: false,
+            newItemStore: 'geral',
+            isListening: false,
+            recognition: null,
+            modal: { type: null, data: null }
+        };
+
+        const AVAILABLE_COLORS = [
+            { name: 'Vermelho', class: 'bg-red-600' }, { name: 'Laranja', class: 'bg-orange-500' },
+            { name: 'Âmbar', class: 'bg-amber-500' }, { name: 'Verde', class: 'bg-green-600' },
+            { name: 'Esmeralda', class: 'bg-emerald-500' }, { name: 'Ciano', class: 'bg-cyan-600' },
+            { name: 'Azul', class: 'bg-blue-600' }, { name: 'Índigo', class: 'bg-indigo-600' },
+            { name: 'Roxo', class: 'bg-purple-600' }, { name: 'Rosa', class: 'bg-pink-600' },
+            { name: 'Ardósia', class: 'bg-slate-600' }, { name: 'Preto', class: 'bg-slate-900' },
+        ];
+
+        const NUMBER_WORD_MAP = {
+            'um': 1, 'uma': 1, 'dois': 2, 'duas': 2, 'três': 3, 'tres': 3,
+            'quatro': 4, 'cinco': 5, 'seis': 6, 'meia': 6, 'meio': 6,
+            'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10, 'onze': 11, 'doze': 12, 'dúzia': 12
+        };
+
+        // --- UTILITÁRIOS ---
+        function formatLastUpdate(timestamp) {
+            if (!timestamp) return 'Nunca';
+            return new Date(timestamp).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function parseVoiceItem(text) {
+            if (!text) return { name: '', qty: 1 };
+            const words = text.trim().split(' ');
+            if (words.length === 0) return { name: '', qty: 1 };
+            const firstWord = words[0].toLowerCase();
+            let qty = 1; let nameStartIndex = 0;
+            if (!isNaN(firstWord)) { qty = parseInt(firstWord); nameStartIndex = 1; } 
+            else if (NUMBER_WORD_MAP[firstWord]) { qty = NUMBER_WORD_MAP[firstWord]; nameStartIndex = 1; }
+            let name = words.slice(nameStartIndex).join(' ');
+            return { name, qty };
+        }
+
+        async function updateGlobalTimestamp() {
+            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_metadata', 'status');
+            try { await updateDoc(metaRef, { lastUpdated: Date.now() }); } 
+            catch (err) { 
+                 if (err.code === 'not-found') {
+                    const { setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+                    await setDoc(metaRef, { lastUpdated: Date.now() });
+                 }
+            }
+        }
+
+        // --- LÓGICA FIREBASE ---
+        async function initAuth() {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        }
+
+        function setupListeners() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), (snapshot) => {
+                const loadedItems = snapshot.docs.map(doc => ({ id: doc.id, supermarket: 'geral', ...doc.data() }));
+                loadedItems.sort((a, b) => {
+                    if (a.isBought === b.isBought) return b.createdAt - a.createdAt;
+                    return a.isBought ? 1 : -1;
+                });
+                state.items = loadedItems;
+                render();
+            });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores'), (snapshot) => {
+                const loadedStores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                loadedStores.sort((a, b) => a.name.localeCompare(b.name));
+                state.stores = loadedStores;
+                state.loading = false;
+                render();
+            });
+            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_metadata', 'status'), (snapshot) => {
+                if (snapshot.exists()) { state.lastUpdate = snapshot.data().lastUpdated; render(); }
+            });
+        }
+
+        // --- AÇÕES ---
+        window.actions = {
+            navigate: (viewId) => { state.currentView = viewId; state.newItemStore = (viewId !== 'dashboard' && viewId !== 'all') ? viewId : 'geral'; render(); },
+            toggleEditMode: () => { state.isEditMode = !state.isEditMode; render(); },
+            openAddStoreModal: () => { state.modal = { type: 'store', data: { name: '', color: AVAILABLE_COLORS[0].class } }; render(); },
+            closeModal: () => { state.modal = { type: null, data: null }; render(); },
+            confirmDelete: (id, type) => { state.modal = { type: 'delete', data: { id, type } }; render(); },
+            addStore: async (name, color) => {
+                if (!name.trim()) return;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores'), { name: name.trim(), color, createdAt: Date.now() });
+                state.modal = { type: null, data: null }; render();
+            },
+            addItem: async (e) => {
+                e.preventDefault(); const form = e.target; const name = form.name.value; const unit = form.unit.value;
+                let store = state.newItemStore;
+                if (state.currentView !== 'dashboard' && state.currentView !== 'all') { store = state.currentView; }
+                if (!name.trim()) return;
+                const submitBtn = form.querySelector('button[type="submit"]'); submitBtn.disabled = true;
+                try {
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), { name: name.trim(), quantity: 1, unit: unit, supermarket: store, note: '', isBought: false, createdAt: Date.now() });
+                    await updateGlobalTimestamp(); form.name.value = '';
+                } finally { submitBtn.disabled = false; form.name.focus(); }
+            },
+            addItemVoice: async (name, qty, store) => {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), { name: name.trim(), quantity: Number(qty), unit: 'unid', supermarket: store, note: '', isBought: false, createdAt: Date.now() });
+                await updateGlobalTimestamp();
+            },
+            toggleBought: async (id, currentStatus) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { isBought: !currentStatus }); },
+            updateQty: async (id, currentQty, delta) => { const newQty = Math.max(1, currentQty + delta); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { quantity: newQty }); await updateGlobalTimestamp(); },
+            updateNote: async (id, newNote) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { note: newNote }); await updateGlobalTimestamp(); },
+            executeDelete: async () => {
+                const { id, type } = state.modal.data;
+                try {
+                    const batch = writeBatch(db);
+                    if (type === 'cart') {
+                         const itemsToDelete = state.items.filter(i => i.isBought && (state.currentView === 'all' || i.supermarket === state.currentView));
+                         itemsToDelete.forEach(item => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', item.id)));
+                    } else if (type === 'store') {
+                        batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores', id));
+                        const itemsToMigrate = state.items.filter(i => i.supermarket === id);
+                        itemsToMigrate.forEach(item => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', item.id), { supermarket: 'geral' }));
+                    } else if (type === 'item') {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id));
+                    }
+                    await batch.commit(); await updateGlobalTimestamp();
+                } finally { state.modal = { type: null, data: null }; render(); }
+            },
+            toggleVoice: () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) { alert("O teu browser não suporta voz."); return; }
+                if (state.isListening) { state.recognition.stop(); state.isListening = false; render(); return; }
+                const recognition = new SpeechRecognition(); recognition.lang = 'pt-PT'; recognition.continuous = true; 
+                recognition.onstart = () => { state.isListening = true; render(); };
+                recognition.onend = () => { state.isListening = false; render(); };
+                recognition.onresult = (event) => {
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            const transcript = event.results[i][0].transcript;
+                            const rawItems = transcript.split(/ e |,| e,/i);
+                            const storeContext = (state.currentView !== 'dashboard' && state.currentView !== 'all') ? state.currentView : 'geral';
+                            rawItems.forEach(rawItem => {
+                                let cleanRaw = rawItem.trim();
+                                if (cleanRaw.length > 0) {
+                                    const { name, qty } = parseVoiceItem(cleanRaw);
+                                    if (name && name.length > 0) {
+                                        const finalName = name.charAt(0).toUpperCase() + name.slice(1).replace(/[.]+$/, "");
+                                        window.actions.addItemVoice(finalName, qty, storeContext);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                };
+                state.recognition = recognition; recognition.start();
+            },
+            setNewItemStore: (storeId) => { state.newItemStore = storeId; render(); }
+        };
+
+        // --- LÓGICA DE RENDERIZAÇÃO ---
+        function render() {
+            const app = document.getElementById('app');
+            const modalContainer = document.getElementById('modal-container');
+            if (state.modal.type) renderModal(modalContainer); else modalContainer.innerHTML = '';
+            if (state.loading) { app.innerHTML = `<div class="flex h-screen items-center justify-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div></div>`; return; }
+            if (state.currentView === 'dashboard') renderDashboard(app); else renderList(app);
+            lucide.createIcons();
+        }
+
+        function getCount(storeId) {
+            if (storeId === 'all') return state.items.filter(i => !i.isBought).length;
+            if (storeId === 'geral') return state.items.filter(i => !i.isBought && (i.supermarket === 'geral' || !state.stores.find(s => s.id === i.supermarket))).length;
+            return state.items.filter(i => !i.isBought && i.supermarket === storeId).length;
+        }
+
+        function renderDashboard(container) {
+            const totalCount = getCount('all'); const geralCount = getCount('geral');
+            let storesHtml = state.stores.map(store => {
+                const count = getCount(store.id);
+                return `<div class="relative group">
+                    <button onclick="actions.navigate('${store.id}')" class="w-full relative p-4 rounded-2xl shadow-sm border transition-all active:scale-[0.98] flex flex-col items-start justify-between h-32 bg-white border-slate-200 hover:border-emerald-200 text-left">
+                        <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md text-white shadow-sm ${store.color}">${store.name}</span>${count > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-600">${count}</span>` : ''}</div>
+                        <div class="mt-auto w-full"><p class="text-${count === 0 ? 'xs text-slate-300' : 'sm font-medium text-slate-600'}">${count === 0 ? 'Tudo comprado' : `${count} ${count === 1 ? 'item' : 'itens'}`}</p></div>
+                    </button>
+                    ${state.isEditMode ? `<button onclick="event.stopPropagation(); actions.confirmDelete('${store.id}', 'store')" class="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 z-10 scale-in"><i data-lucide="x" class="w-4 h-4"></i></button>` : ''}
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <header class="bg-white border-b border-emerald-100 p-4 sticky top-0 z-10 fade-in select-none">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="bg-emerald-100 p-2 rounded-lg"><i data-lucide="shopping-bag" class="w-6 h-6 text-emerald-600"></i></div>
+                            <div><h1 class="text-xl font-bold text-slate-800">Olá, Ricardo!</h1><p class="text-xs text-slate-500">Vamos às compras?</p></div>
+                        </div>
+                        <button onclick="actions.toggleEditMode()" class="p-2 rounded-full transition-colors ${state.isEditMode ? 'bg-slate-200 text-slate-800' : 'text-slate-400 hover:bg-slate-100'}"><i data-lucide="settings" class="w-5 h-5"></i></button>
+                    </div>
+                </header>
+                <main class="p-4 fade-in">
+                    ${state.isEditMode ? `<div class="mb-4 bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-xs text-yellow-800 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Modo de edição: Podes apagar lojas.</div>` : ''}
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="actions.navigate('all')" class="col-span-2 relative p-4 rounded-2xl shadow-sm border transition-all active:scale-[0.98] flex flex-col items-start justify-between h-28 bg-gradient-to-r from-slate-800 to-slate-700 text-white border-transparent">
+                            <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md bg-white/20">Toda a Lista</span>${totalCount > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">${totalCount}</span>` : ''}</div>
+                            <p class="text-xs text-slate-300 mt-auto">${totalCount === 0 ? 'Tudo tranquilo' : 'Itens totais em falta'}</p>
+                        </button>
+                        ${storesHtml}
+                        <button onclick="actions.navigate('geral')" class="relative p-4 rounded-2xl shadow-sm border border-slate-200 transition-all active:scale-[0.98] flex flex-col items-start justify-between h-32 bg-slate-50 hover:bg-white">
+                            <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md bg-slate-200 text-slate-600">Geral / Outros</span>${geralCount > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600">${geralCount}</span>` : ''}</div>
+                            <p class="text-xs text-slate-400 mt-auto">Itens sem loja definida</p>
+                        </button>
+                        <button onclick="actions.openAddStoreModal()" class="relative p-4 rounded-2xl border-2 border-dashed border-slate-300 transition-all active:scale-[0.95] flex flex-col items-center justify-center h-32 text-slate-400 hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50"><i data-lucide="plus" class="w-8 h-8 mb-2"></i><span class="text-xs font-bold">Adicionar Loja</span></button>
+                    </div>
+                </main>`;
+        }
+
+        function renderList(container) {
+            let currentStoreInfo = { label: 'Toda a Lista', color: 'bg-slate-800' };
+            if (state.currentView === 'geral') currentStoreInfo = { label: 'Geral / Outros', color: 'bg-slate-500' };
+            else if (state.currentView !== 'all') { const s = state.stores.find(st => st.id === state.currentView); if (s) currentStoreInfo = { label: s.name, color: s.color }; }
+            const displayedItems = state.items.filter(item => {
+                if (state.currentView === 'all') return true;
+                if (state.currentView === 'geral') { const storeExists = state.stores.find(s => s.id === item.supermarket); return item.supermarket === 'geral' || !storeExists; }
+                return item.supermarket === state.currentView;
+            });
+            const activeItems = displayedItems.filter(i => !i.isBought);
+            const boughtItems = displayedItems.filter(i => i.isBought);
+
+            const itemsHtml = displayedItems.length === 0 ? `<div class="text-center py-12 opacity-40"><i data-lucide="shopping-cart" class="w-16 h-16 mx-auto mb-3 text-slate-300"></i><p class="text-slate-500 font-medium">Lista vazia.</p></div>` 
+            : displayedItems.map(item => {
+                let itemStore = state.stores.find(s => s.id === item.supermarket); let storeLabel = itemStore ? itemStore.name : 'Geral'; let storeColor = itemStore ? itemStore.color : 'bg-slate-400';
+                return `<div class="group relative bg-white rounded-xl border transition-all duration-300 ${item.isBought ? 'border-slate-100 bg-slate-50 opacity-60' : 'border-slate-200 shadow-sm'}">
+                    <div class="flex items-center p-3 gap-3">
+                        <button onclick="actions.toggleBought('${item.id}', ${item.isBought})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${item.isBought ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'}">${item.isBought ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}</button>
+                        <div class="flex-1 min-w-0"><div class="flex flex-col"><span class="font-bold truncate ${item.isBought ? 'text-slate-500 line-through' : 'text-slate-800'}">${item.name}</span>${state.currentView === 'all' ? `<span class="text-[9px] w-max px-1.5 py-0.5 rounded-md mt-0.5 text-white/90 ${storeColor}">${storeLabel}</span>` : ''}</div></div>
+                        <div class="flex items-center bg-slate-100 rounded-lg p-1 gap-2">
+                            <button onclick="actions.updateQty('${item.id}', ${item.quantity}, -1)" ${item.isBought ? 'disabled' : ''} class="w-6 h-6 flex items-center justify-center rounded bg-white text-slate-600 shadow-sm disabled:opacity-50"><i data-lucide="minus" class="w-3 h-3"></i></button>
+                            <span class="text-xs font-bold w-8 text-center text-slate-700">${item.quantity}<span class="text-[9px] font-normal uppercase text-slate-400 ml-0.5">${item.unit}</span></span>
+                            <button onclick="actions.updateQty('${item.id}', ${item.quantity}, 1)" ${item.isBought ? 'disabled' : ''} class="w-6 h-6 flex items-center justify-center rounded bg-white text-emerald-600 shadow-sm disabled:opacity-50"><i data-lucide="plus" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                    <div class="px-3 pb-3 pl-12"><div class="flex items-center gap-2 text-slate-400"><i data-lucide="align-left" class="w-3 h-3"></i><input type="text" value="${item.note}" placeholder="Nota..." onblur="if(this.value !== '${item.note}') actions.updateNote('${item.id}', this.value)" ${item.isBought ? 'disabled' : ''} class="w-full bg-transparent text-xs outline-none border-b border-dashed border-slate-200 focus:border-emerald-300 py-0.5 text-slate-600"></div></div>
+                    <button onclick="actions.confirmDelete('${item.id}', 'item')" class="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer"><i data-lucide="x" class="w-3 h-3"></i></button>
+                </div>`;
+            }).join('');
+
+            const storeSelectorHtml = (state.currentView === 'all' && !state.isListening) ? `<div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar pt-2"><button type="button" onclick="actions.setNewItemStore('geral')" class="text-[10px] px-3 py-1 rounded-full whitespace-nowrap border transition-colors ${state.newItemStore === 'geral' ? 'bg-slate-500 text-white border-transparent' : 'bg-slate-50 border-slate-200 text-slate-500'}">Geral</button>${state.stores.map(s => `<button type="button" onclick="actions.setNewItemStore('${s.id}')" class="text-[10px] px-3 py-1 rounded-full whitespace-nowrap border transition-colors ${state.newItemStore === s.id ? s.color + ' text-white border-transparent' : 'bg-slate-50 border-slate-200 text-slate-500'}">${s.name}</button>`).join('')}</div>` : '';
+
+            container.innerHTML = `
+                <header class="bg-white border-b border-emerald-100 sticky top-0 z-10 shadow-sm fade-in select-none">
+                    <div class="max-w-md mx-auto px-4 py-3">
+                        <div class="flex items-center gap-3">
+                            <button onclick="actions.navigate('dashboard')" class="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                            <div class="flex-1"><h1 class="text-lg font-bold text-slate-800 leading-none flex items-center gap-2">${currentStoreInfo.label}</h1><p class="text-xs text-slate-500 font-medium">${activeItems.length} por comprar</p></div>
+                            ${state.currentView !== 'all' ? `<div class="w-3 h-3 rounded-full ${currentStoreInfo.color.split(' ')[0]}"></div>` : ''}
+                        </div>
+                    </div>
+                    ${state.isListening ? `<div class="bg-red-500 text-white text-xs font-bold py-1 px-4 text-center animate-pulse flex items-center justify-center gap-2"><i data-lucide="activity" class="w-3 h-3 animate-bounce"></i> Diz "2 Leites..."</div>` : ''}
+                </header>
+                <main class="p-4 space-y-5 fade-in">
+                    <form onsubmit="actions.addItem(event)" class="bg-white p-3 rounded-2xl shadow-sm border transition-all ${state.isListening ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200 ring-1 ring-slate-100'}">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center gap-2">
+                                <div class="flex-1 relative flex items-center">
+                                    <input type="text" name="name" placeholder="${state.isListening ? "A ouvir..." : "O que falta comprar?"}" autocomplete="off" ${state.isListening ? 'disabled' : ''} class="w-full bg-transparent outline-none text-slate-800 placeholder:text-slate-400 font-medium pr-10">
+                                    <button type="button" onclick="actions.toggleVoice()" class="absolute right-0 p-2 rounded-full transition-all flex items-center justify-center ${state.isListening ? 'bg-red-500 text-white' : 'text-slate-400 hover:text-emerald-600'}">${state.isListening ? '<i data-lucide="mic-off" class="w-4 h-4"></i>' : '<i data-lucide="mic" class="w-4 h-4"></i>'}</button>
+                                </div>
+                                <select name="unit" class="bg-slate-50 text-xs font-bold text-slate-500 rounded-lg px-2 py-1.5 outline-none border border-slate-200"><option value="unid">Unid</option><option value="emb">Emb</option><option value="kg">Kg</option></select>
+                            </div>
+                            ${storeSelectorHtml}
+                        </div>
+                        ${!state.isListening ? `<button type="submit" class="w-full mt-2 bg-slate-900 text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.98] transition-all"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar</button>` : ''}
+                    </form>
+                    <div class="space-y-3 pb-20">${itemsHtml}</div>
+                </main>
+                ${boughtItems.length > 0 ? `<div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 fade-in"><div class="max-w-md mx-auto"><button onclick="actions.confirmDelete(null, 'cart')" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-200 active:scale-[0.98] transition-transform hover:bg-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i> Limpar ${boughtItems.length} Comprados</button></div></div>` : ''}`;
+        }
+
+        function renderModal(container) {
+            const { type, data } = state.modal;
+            if (type === 'store') {
+                container.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"><div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl animate-in scale-in">
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">Nova Loja</h3>
+                    <form onsubmit="event.preventDefault(); actions.addStore(this.storeName.value, this.storeColor.value)"><div><label class="text-xs font-bold text-slate-500 uppercase">Nome</label><input name="storeName" type="text" placeholder="Ex: Talho..." class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-colors" autoFocus></div><div class="mt-4"><label class="text-xs font-bold text-slate-500 uppercase">Cor</label><div class="grid grid-cols-6 gap-2 mt-2">${AVAILABLE_COLORS.map(c => `<button type="button" onclick="this.form.storeColor.value = '${c.class}'; document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-400', 'scale-110')); this.classList.add('ring-2', 'ring-offset-2', 'ring-slate-400', 'scale-110')" class="color-btn w-8 h-8 rounded-full ${c.class} transition-transform hover:scale-110 ${c.class === AVAILABLE_COLORS[0].class ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : ''}"></button>`).join('')}</div><input type="hidden" name="storeColor" value="${AVAILABLE_COLORS[0].class}"></div><div class="flex gap-3 mt-6"><button type="button" onclick="actions.closeModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancelar</button><button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800">Criar</button></div></form></div></div>`;
+            } else if (type === 'delete') {
+                const isCart = data.type === 'cart'; const isStore = data.type === 'store';
+                container.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in"><div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in scale-in"><div class="flex flex-col items-center text-center gap-4"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i></div><div><h3 class="text-lg font-bold text-slate-800">${isCart ? 'Limpar Carrinho?' : isStore ? 'Apagar Loja?' : 'Apagar Item?'}</h3><p class="text-sm text-slate-500 mt-1">${isCart ? 'Vais remover os itens comprados.' : isStore ? 'A loja será removida, os itens passam para Geral.' : 'Esta ação é irreversível.'}</p></div><div class="flex gap-3 w-full mt-2"><button onclick="actions.closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button><button onclick="actions.executeDelete()" class="flex-1 py-2.5 rounded-xl bg-red-500 font-semibold text-white hover:bg-red-600 shadow-md shadow-red-200">Apagar</button></div></div></div></div>`;
+            }
+            lucide.createIcons();
+        }
+
+        onAuthStateChanged(auth, (user) => { state.user = user; if (user) setupListeners(); else initAuth(); });
+    </script>
+</body>
+</html>
