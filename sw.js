@@ -1,6 +1,6 @@
 // Service worker da Dispensa: abre instantaneamente e funciona offline.
 // Os dados (Firestore) têm cache própria dentro da app; aqui só guardamos o "esqueleto" da app.
-const VERSION = 'dispensa-v10';
+const VERSION = 'dispensa-v11';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
