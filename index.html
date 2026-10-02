@@ -1,55 +1,277 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dispensa</title>
-    
-    <!-- Configurações PWA (Para parecer App) -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Dispensa">
-    <link rel="apple-touch-icon" href="icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dispensa</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" id="tc" content="#eef1f8">
+<meta name="color-scheme" content="light dark">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("dispensa-theme")||"light"}catch(e){document.documentElement.dataset.theme="light"}</script>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Dispensa">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 
-    <style>
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Animações suaves */
-        .fade-in { animation: fadeIn 0.2s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .scale-in { animation: scaleIn 0.15s ease-out; }
-        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    </style>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #eef1f8;
+  --surface: #ffffff;
+  --surface-2: #e7ebf5;
+  --line: #d3daea;
+  --text: #0a1330;
+  --muted: #5a6585;
+  --faint: #98a2bf;
+  --navy: #14214f;
+  --red: #e4002b;
+  --red-2: #ff2d4d;
+  --yellow: #ffc400;
+  --blue: #1e3a9e;
+  --blue-2: #2b4fd0;
+  --danger: #e4002b;
+  --danger-soft: rgba(228,0,43,.1);
+  --on-yellow: #1a1300;
+  --input-bg: #f4f6fc;
+  --lines: rgba(20,33,79,.045);
+  --card-grad: linear-gradient(160deg, #ffffff, #f4f6fc);
+  --shadow: 0 1px 0 rgba(20,33,79,.06), 0 8px 22px rgba(20,33,79,.09);
+  --shadow-lg: 0 16px 50px rgba(10,19,48,.3);
+  --hdr-bg: rgba(238,241,248,.9);
+  --stripe: linear-gradient(90deg, var(--red) 0 56%, var(--yellow) 56% 63%, var(--navy) 63% 100%);
+  --display: "Arial Black", "Segoe UI Black", "Helvetica Neue", Roboto, system-ui, sans-serif;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #050816;
+  --surface: #0e1630;
+  --surface-2: #17224a;
+  --line: #26356b;
+  --text: #f4f6ff;
+  --muted: #9ba7d2;
+  --faint: #5f6d9d;
+  --navy: #2a3f94;
+  --red: #ff1f3d;
+  --red-2: #ff5570;
+  --yellow: #ffd21f;
+  --blue: #4a73ff;
+  --blue-2: #7b9bff;
+  --danger: #ff5570;
+  --danger-soft: rgba(255,85,112,.15);
+  --input-bg: #070d22;
+  --lines: rgba(255,255,255,.035);
+  --card-grad: linear-gradient(160deg, #121c3d, #0b1330);
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 10px 26px rgba(0,0,0,.5);
+  --shadow-lg: 0 16px 50px rgba(0,0,0,.8);
+  --hdr-bg: rgba(5,8,22,.88);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 16px; line-height: 1.35; overscroll-behavior: none; min-height: 100vh; min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+/* riscas de velocidade (estáticas, sem custo) */
+body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(-62deg, transparent 0 46px, var(--lines) 46px 49px, transparent 49px 120px); }
+button { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
+input, select { font: inherit; color: inherit; font-size: 16px; }
+button, .item, .tile { user-select: none; -webkit-user-select: none; }
+svg.ic { width: 1.25em; height: 1.25em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.it { font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; }
+
+#app { max-width: 560px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; z-index: 1; }
+
+/* ---------- Header ---------- */
+.hdr { position: sticky; top: 0; z-index: 20; padding: calc(var(--safe-t) + 14px) 18px 14px; background: var(--hdr-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.hdr::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: var(--stripe); clip-path: polygon(0 0, 100% 0, 100% 100%, 2.5% 100%); }
+.hdr-row { display: flex; align-items: center; gap: 10px; }
+.hdr h1 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 23px; letter-spacing: -.02em; line-height: 1.05; }
+.hdr h1 em { font-style: italic; color: var(--red); }
+.hdr p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.grow { flex: 1; min-width: 0; }
+.ibtn { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); color: var(--text); box-shadow: var(--shadow); transition: transform .12s; flex: none; transform: skewX(-8deg); }
+.ibtn svg { transform: skewX(8deg); }
+.ibtn:active { transform: skewX(-8deg) scale(.92); }
+.ibtn.on { background: var(--yellow); border-color: var(--yellow); color: var(--on-yellow); }
+.logo { width: 50px; height: 50px; border-radius: 14px; object-fit: cover; box-shadow: 0 6px 16px rgba(228,0,43,.35); flex: none; }
+.dot { width: 14px; height: 14px; border-radius: 3px; transform: skewX(-20deg); flex: none; }
+.progress { position: relative; height: 8px; border-radius: 3px; background: var(--surface-2); margin-top: 12px; overflow: hidden; border: 1px solid var(--line); }
+.progress i { display: block; height: 100%; background: linear-gradient(90deg, var(--red), var(--yellow)); transition: width .35s ease; }
+.progress::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 22px; background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0/8px 8px; opacity: .85; }
+
+/* ---------- Main ---------- */
+main { padding: 16px 18px calc(210px + var(--safe-b)); animation: fade .25s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes pop { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: none; } }
+
+.hero { width: 100%; text-align: left; padding: 22px 20px 18px; border-radius: 20px; color: #fff; position: relative; overflow: hidden; isolation: isolate;
+  background: linear-gradient(125deg, #070f33 0%, #12236e 60%, #1e3a9e 100%); box-shadow: 0 14px 34px rgba(20,33,100,.35); transition: transform .12s; }
+.hero:active { transform: scale(.985); }
+.hero::before { content: ""; position: absolute; z-index: -1; right: -30px; top: -20px; width: 60%; height: 140%; background: linear-gradient(90deg, var(--red) 0 38%, transparent 38% 56%, var(--red) 56% 78%, transparent 78%); transform: skewX(-24deg); opacity: .95; }
+.lights { position: absolute; right: 16px; top: 16px; display: flex; gap: 5px; padding: 6px; background: #0b0b10; border-radius: 10px; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 8px 18px rgba(0,0,0,.4); overflow: hidden; }
+.lights i { position: relative; width: 18px; height: 40px; border-radius: 6px; background: #17171f; }
+.lights i::before, .lights i::after { content: ""; position: absolute; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #ff9aa6, #ff1f3d 55%, #b3001f); box-shadow: 0 0 10px 2px rgba(255,31,61,.85); }
+.lights i::before { top: 4px; } .lights i::after { bottom: 4px; }
+/* partida de F1: um temporizador em JS liga as luzes 1 a 1 (classe .on), faz "lights out" (.out) e deixa-as acesas */
+.lights.seq i::before, .lights.seq i::after { opacity: .12; box-shadow: none; transition: opacity .06s; }
+.lights.seq i.on::before, .lights.seq i.on::after { opacity: 1; box-shadow: 0 0 10px 2px rgba(255,31,61,.85); }
+.hero small { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--yellow); }
+.hero .big { display: flex; align-items: baseline; gap: 10px; margin-top: 4px; }
+.hero .big b { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 70px; line-height: 1; letter-spacing: -.04em; text-shadow: 0 4px 0 rgba(0,0,0,.3); }
+.hero .big span { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; max-width: 120px; line-height: 1.15; }
+.hero .bar { position: relative; height: 9px; background: rgba(255,255,255,.2); border-radius: 3px; margin-top: 16px; overflow: hidden; }
+.hero .bar i { display: block; height: 100%; background: linear-gradient(90deg, #fff, var(--yellow)); transition: width .4s; }
+.hero .bar::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 24px; background: conic-gradient(#000 25%, #fff 0 50%, #000 0 75%, #fff 0) 0 0/9px 9px; }
+.hero .sub { font-size: 12px; font-weight: 700; opacity: .92; margin-top: 8px; }
+
+.sec { display: flex; align-items: center; justify-content: space-between; margin: 26px 2px 12px; }
+.sec h2 { margin: 0; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 15px; letter-spacing: .02em; display: flex; align-items: center; gap: 10px; }
+.sec h2::before { content: ""; width: 20px; height: 12px; background: linear-gradient(90deg, var(--red) 0 40%, transparent 40% 60%, var(--red) 60%); transform: skewX(-24deg); }
+.sec.b h2::before { background: linear-gradient(90deg, var(--yellow) 0 40%, transparent 40% 60%, var(--yellow) 60%); }
+.link { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: #fff; padding: 9px 16px; border-radius: 8px; background: var(--red); transform: skewX(-10deg); box-shadow: 0 6px 14px rgba(228,0,43,.3); }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tile-wrap { position: relative; }
+.tile { --c: #64748b; width: 100%; text-align: left; padding: 14px; min-height: 138px; border-radius: 16px; position: relative; overflow: hidden;
+  background: var(--card-grad); border: 1px solid var(--line); box-shadow: var(--shadow);
+  display: flex; flex-direction: column; justify-content: space-between; transition: transform .12s; animation: pop .25s ease both; }
+.tile::before { content: ""; position: absolute; left: -10px; top: 0; bottom: 0; width: 22px; background: var(--c); transform: skewX(-12deg); }
+.tile:active { transform: scale(.96); }
+.tile .top { display: flex; justify-content: space-between; align-items: flex-start; padding-left: 12px; position: relative; }
+.corner { display: flex; flex-direction: column; line-height: 1; }
+.corner b { font-family: var(--display); font-style: italic; font-weight: 900; font-size: 32px; color: var(--c); letter-spacing: -.03em; }
+.corner i { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .12em; color: var(--muted); margin-top: 2px; }
+.tile .wm { position: absolute; right: 6px; bottom: -14px; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 84px; line-height: 1; color: var(--c); opacity: .13; pointer-events: none; }
+.tile .name { margin-left: 12px; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; letter-spacing: -.01em; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; position: relative; }
+.tile .meta { margin-left: 12px; font-size: 12px; color: var(--muted); font-weight: 700; margin-top: 2px; position: relative; }
+.tile .meta.ok { color: var(--blue-2); }
+.count { min-width: 30px; height: 30px; padding: 0 9px; border-radius: 8px; display: grid; place-items: center; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 15px; background: var(--c); color: #fff; transform: skewX(-10deg); box-shadow: 0 4px 10px rgba(0,0,0,.25); }
+.tile.dashed { background: transparent; border: 2px dashed var(--line); box-shadow: none; align-items: center; justify-content: center; color: var(--muted); gap: 6px; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 13px; }
+.tile.dashed::before { display: none; }
+.tile.dashed:hover { color: var(--red); border-color: var(--red); }
+.tile.dashed svg { width: 30px; height: 30px; }
+.del-badge { position: absolute; top: -8px; right: -8px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; background: var(--red); color: #fff; display: grid; place-items: center; box-shadow: var(--shadow); border: 2px solid var(--bg); animation: pop .2s ease; }
+.hint { background: rgba(255,196,0,.18); border: 1px solid var(--yellow); border-radius: 12px; padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text); display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+
+/* ---------- Items ---------- */
+.list { display: flex; flex-direction: column; gap: 10px; }
+.item { --c: #64748b; background: var(--card-grad); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 12px 12px 12px 22px; position: relative; overflow: hidden; animation: pop .22s ease both; transition: opacity .2s; }
+.item::before { content: ""; position: absolute; left: -6px; top: 0; bottom: 0; width: 14px; background: var(--c); transform: skewX(-12deg); }
+.item.done { box-shadow: none; background: transparent; opacity: .55; }
+.item-row { display: flex; align-items: center; gap: 12px; }
+.chk { width: 32px; height: 32px; border-radius: 8px; border: 2.5px solid var(--faint); display: grid; place-items: center; transition: all .15s; flex: none; transform: skewX(-8deg); background: var(--surface); }
+.chk:active { transform: skewX(-8deg) scale(.88); }
+.chk svg { display: none; }
+.item.done .chk { border-color: var(--text); background: conic-gradient(#0a1330 25%, #fff 0 50%, #0a1330 0 75%, #fff 0) 0 0/10px 10px; }
+.body { flex: 1; min-width: 0; cursor: pointer; padding: 2px 0; }
+.iname { font-weight: 800; font-size: 17px; overflow-wrap: anywhere; }
+.item.done .iname { text-decoration: line-through; color: var(--muted); }
+.imeta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.pill { font-size: 10px; font-weight: 900; font-style: italic; letter-spacing: .05em; text-transform: uppercase; padding: 2px 9px; border-radius: 4px; color: #fff; transform: skewX(-10deg); }
+.qty { display: flex; align-items: center; gap: 2px; background: var(--surface-2); border-radius: 12px; padding: 3px; flex: none; }
+.qty button { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.qty button:active { transform: scale(.88); }
+.qty button:disabled { opacity: .35; box-shadow: none; }
+.qty button.plus { background: var(--red); color: #fff; }
+.qty .v { min-width: 44px; text-align: center; font-family: var(--display); font-style: italic; font-weight: 900; font-size: 18px; line-height: 1; }
+.qty .v small { display: block; font-family: ui-sans-serif, system-ui, sans-serif; font-style: normal; font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: .06em; margin-top: 2px; }
+.detail { display: flex; gap: 8px; margin-top: 10px; padding-left: 44px; animation: fade .2s ease; }
+.detail input { flex: 1; min-width: 0; background: var(--input-bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; outline: none; font-size: 15px; }
+.detail input:focus { border-color: var(--blue-2); }
+.detail .rm { width: 44px; border-radius: 10px; background: var(--danger-soft); color: var(--danger); display: grid; place-items: center; }
+
+.empty { text-align: center; padding: 56px 20px; color: var(--muted); font-weight: 600; }
+.empty .circle { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 20px; display: grid; place-items: center; background: var(--surface); color: var(--red); border: 4px solid var(--yellow); box-shadow: 0 10px 28px rgba(255,196,0,.35); }
+.empty .circle svg { width: 40px; height: 40px; }
+.empty b { display: block; color: var(--text); font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 20px; margin-bottom: 4px; }
+
+/* ---------- Composer ---------- */
+.composer-wrap { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; pointer-events: none; }
+.composer { pointer-events: auto; max-width: 560px; margin: 0 auto; padding: 16px 14px calc(12px + var(--safe-b)); position: relative;
+  background: var(--surface); border-radius: 20px 20px 0 0; box-shadow: 0 -10px 40px rgba(10,19,48,.22); border: 1px solid var(--line); border-bottom: 0; }
+.composer::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--stripe); border-radius: 20px 20px 0 0; clip-path: polygon(0 0, 100% 0, 97.5% 100%, 0 100%); }
+.composer.listening { box-shadow: 0 -10px 40px rgba(228,0,43,.4); }
+.crow { display: flex; align-items: center; gap: 8px; }
+.cin { flex: 1; min-width: 0; display: flex; align-items: center; background: var(--input-bg); border-radius: 12px; border: 1.5px solid var(--line); transition: border-color .15s; }
+.cin:focus-within { border-color: var(--red); box-shadow: 0 0 0 3px rgba(228,0,43,.15); }
+.cin input { flex: 1; min-width: 0; background: none; border: 0; outline: none; padding: 14px 14px; font-weight: 700; }
+.cin input::placeholder { color: var(--faint); font-weight: 600; }
+.mic { width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; background: var(--yellow); color: var(--on-yellow); flex: none; transition: all .15s; box-shadow: 0 6px 16px rgba(255,196,0,.4); transform: skewX(-8deg); }
+.mic svg, .send svg { transform: skewX(8deg); }
+.mic:active { transform: skewX(-8deg) scale(.92); }
+.mic.on { background: var(--red); color: #fff; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(228,0,43,.6); } 70% { box-shadow: 0 0 0 14px rgba(228,0,43,0); } 100% { box-shadow: 0 0 0 0 rgba(228,0,43,0); } }
+.send { width: 50px; height: 50px; border-radius: 12px; display: grid; place-items: center; background: var(--red); color: #fff; flex: none; box-shadow: 0 6px 18px rgba(228,0,43,.42); transition: transform .12s; transform: skewX(-8deg); }
+.send svg { stroke-width: 3.2; }
+.send:active { transform: skewX(-8deg) scale(.9); }
+.send:disabled { opacity: .45; }
+.opts { display: flex; align-items: center; gap: 8px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.opts::-webkit-scrollbar { display: none; }
+.seg { display: flex; background: var(--surface-2); border-radius: 9px; padding: 3px; flex: none; }
+.seg label { cursor: pointer; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg span { display: block; padding: 5px 11px; border-radius: 6px; font-size: 12px; font-weight: 800; color: var(--muted); }
+.seg input:checked + span { background: var(--navy); color: #fff; }
+.chip { flex: none; padding: 7px 13px; border-radius: 7px; font-size: 12px; font-weight: 800; background: var(--surface-2); color: var(--muted); border: 1.5px solid transparent; white-space: nowrap; }
+.chip.sel { color: #fff; }
+.listen-msg { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 900; color: var(--red); padding: 0 4px 10px; text-transform: uppercase; font-style: italic; }
+
+/* ---------- Sheet / Toast ---------- */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(5,8,22,.62); backdrop-filter: blur(3px); display: flex; align-items: flex-end; justify-content: center; animation: fadeo .2s ease; }
+@keyframes fadeo { from { opacity: 0; } to { opacity: 1; } }
+@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet { width: 100%; max-width: 560px; background: var(--surface); border-radius: 22px 22px 0 0; padding: 12px 22px calc(22px + var(--safe-b)); box-shadow: var(--shadow-lg); animation: up .25s cubic-bezier(.2,.8,.2,1); position: relative; }
+.sheet::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: var(--stripe); border-radius: 22px 22px 0 0; }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 8px auto 16px; }
+.sheet h3 { margin: 0 0 4px; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 22px; letter-spacing: -.01em; }
+.sheet p { margin: 0; color: var(--muted); font-size: 14px; font-weight: 500; }
+.sheet label.lbl { display: block; font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .1em; color: var(--red); margin: 18px 0 8px; }
+.sheet input[type=text] { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--input-bg); outline: none; font-weight: 700; }
+.sheet input[type=text]:focus { border-color: var(--red); }
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.sw { aspect-ratio: 1; border-radius: 10px; border: 3px solid transparent; transition: transform .12s; transform: skewX(-8deg); }
+.sw.sel { border-color: var(--text); transform: skewX(-8deg) scale(1.1); }
+.btns { display: flex; gap: 10px; margin-top: 22px; }
+.btn { flex: 1; padding: 15px; border-radius: 12px; font-family: var(--display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: 14px; background: var(--surface-2); }
+.btn.primary { background: var(--red); color: #fff; box-shadow: 0 8px 18px rgba(228,0,43,.35); }
+.btn.danger { background: var(--red); color: #fff; box-shadow: 0 8px 18px rgba(228,0,43,.35); }
+.warn { width: 56px; height: 56px; border-radius: 14px; transform: skewX(-10deg); background: rgba(255,196,0,.2); border: 2px solid var(--yellow); color: var(--text); display: grid; place-items: center; margin: 8px 0 18px 6px; }
+.warn svg { width: 26px; height: 26px; transform: skewX(10deg); }
+
+.toast { position: fixed; left: 50%; bottom: calc(190px + var(--safe-b)); transform: translateX(-50%); z-index: 60; background: var(--navy); color: #fff;
+  padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 14px; box-shadow: var(--shadow-lg); animation: up .25s ease; max-width: calc(100% - 28px); border-left: 6px solid var(--yellow); }
+.toast button { font-family: var(--display); font-style: italic; font-weight: 900; color: var(--yellow); text-transform: uppercase; font-size: 12px; }
+.toast.err { background: var(--red); border-left-color: #fff; }
+.loading { display: grid; place-items: center; height: 100vh; }
+.spin { width: 46px; height: 46px; border-radius: 50%; border: 5px solid var(--surface-2); border-top-color: var(--red); border-right-color: var(--yellow); animation: sp .7s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.offline { background: var(--surface-2); color: var(--muted); font-size: 12px; font-weight: 700; text-align: center; padding: 6px; border-radius: 8px; margin-top: 10px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
 </head>
-<body class="bg-slate-50 min-h-screen pb-32 overscroll-none">
+<body>
+<div id="app">
+  <div id="hdr"></div>
+  <div id="main"><div class="loading"><div class="spin"></div></div></div>
+  <div class="composer-wrap"><div id="composer"></div></div>
+</div>
+<div id="modal"></div>
+<div id="toast"></div>
 
-    <div id="app" class="max-w-md mx-auto">
-        <div class="flex h-screen items-center justify-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-        </div>
-    </div>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { initializeFirestore, getFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, updateDoc, addDoc, setDoc, deleteDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-    <!-- Contentor para Modais -->
-    <div id="modal-container"></div>
-
-    <!-- Scripts do Firebase -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, doc, onSnapshot, updateDoc, addDoc, deleteDoc, writeBatch, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        // --- ATENÇÃO RICARDO: COLA AQUI A TUA CONFIGURAÇÃO DO FIREBASE ---
-        const firebaseConfig = {
+// ---------------- Firebase (mesma base de dados de sempre) ----------------
+const firebaseConfig = {
   apiKey: "AIzaSyCj1DvIHJTU6nYimJnOJYs5KgHX0_M37vw",
   authDomain: "dispensahome-40379.firebaseapp.com",
   projectId: "dispensahome-40379",
@@ -58,315 +280,427 @@
   appId: "1:834278967482:web:8b53dce26d3e4a3f43da83",
   measurementId: "G-6Q0LRLTWT8"
 };
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'minha-casa';
 
-        // Fallback para usar configuração do sistema se a tua estiver vazia (apenas para teste)
-        const activeConfig = Object.keys(firebaseConfig).length > 0 ? firebaseConfig : JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'minha-casa'; 
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+let db;
+try {
+  // cache local: a app abre e funciona sem rede e sincroniza quando voltar
+  db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+} catch (e) { db = getFirestore(app); }
 
-        const app = initializeApp(activeConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+const base = ['artifacts', appId, 'public', 'data'];
+const itemsCol = () => collection(db, ...base, 'dispensa_items');
+const storesCol = () => collection(db, ...base, 'dispensa_stores');
+const itemDoc = (id) => doc(db, ...base, 'dispensa_items', id);
+const storeDoc = (id) => doc(db, ...base, 'dispensa_stores', id);
+const metaDoc = () => doc(db, ...base, 'dispensa_metadata', 'status');
 
-        // --- ESTADO DA APLICAÇÃO ---
-        const state = {
-            user: null,
-            items: [],
-            stores: [],
-            loading: true,
-            lastUpdate: null,
-            currentView: 'dashboard', 
-            isEditMode: false,
-            newItemStore: 'geral',
-            isListening: false,
-            recognition: null,
-            modal: { type: null, data: null }
-        };
+// ---------------- Estado ----------------
+const state = {
+  items: [], stores: [], loading: true, lastUpdate: null,
+  view: 'dashboard', edit: false, newItemStore: 'geral', unit: 'unid',
+  expanded: null, listening: false, recognition: null, modal: null, online: navigator.onLine,
+  itemsReady: false, storesReady: false
+};
 
-        const AVAILABLE_COLORS = [
-            { name: 'Vermelho', class: 'bg-red-600' }, { name: 'Laranja', class: 'bg-orange-500' },
-            { name: 'Âmbar', class: 'bg-amber-500' }, { name: 'Verde', class: 'bg-green-600' },
-            { name: 'Esmeralda', class: 'bg-emerald-500' }, { name: 'Ciano', class: 'bg-cyan-600' },
-            { name: 'Azul', class: 'bg-blue-600' }, { name: 'Índigo', class: 'bg-indigo-600' },
-            { name: 'Roxo', class: 'bg-purple-600' }, { name: 'Rosa', class: 'bg-pink-600' },
-            { name: 'Ardósia', class: 'bg-slate-600' }, { name: 'Preto', class: 'bg-slate-900' },
-        ];
+// As cores das lojas ficam guardadas como classes (ex.: "bg-red-600") para manter compatibilidade com os dados existentes
+const COLORS = [
+  { name: 'Vermelho', cls: 'bg-red-600', hex: '#dc2626' }, { name: 'Laranja', cls: 'bg-orange-500', hex: '#f97316' },
+  { name: 'Âmbar', cls: 'bg-amber-500', hex: '#f59e0b' }, { name: 'Verde', cls: 'bg-green-600', hex: '#16a34a' },
+  { name: 'Esmeralda', cls: 'bg-emerald-500', hex: '#10b981' }, { name: 'Ciano', cls: 'bg-cyan-600', hex: '#0891b2' },
+  { name: 'Azul', cls: 'bg-blue-600', hex: '#2563eb' }, { name: 'Índigo', cls: 'bg-indigo-600', hex: '#4f46e5' },
+  { name: 'Roxo', cls: 'bg-purple-600', hex: '#9333ea' }, { name: 'Rosa', cls: 'bg-pink-600', hex: '#db2777' },
+  { name: 'Ardósia', cls: 'bg-slate-600', hex: '#475569' }, { name: 'Preto', cls: 'bg-slate-900', hex: '#334155' }
+];
+const colorHex = (cls) => (COLORS.find(c => c.cls === String(cls).split(' ')[0]) || { hex: '#64748b' }).hex;
+const GENERAL_HEX = '#8a93a6';
 
-        const NUMBER_WORD_MAP = {
-            'um': 1, 'uma': 1, 'dois': 2, 'duas': 2, 'três': 3, 'tres': 3,
-            'quatro': 4, 'cinco': 5, 'seis': 6, 'meia': 6, 'meio': 6,
-            'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10, 'onze': 11, 'doze': 12, 'dúzia': 12
-        };
+const NUMBER_WORDS = { um: 1, uma: 1, dois: 2, duas: 2, 'três': 3, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10, onze: 11, doze: 12, 'dúzia': 12, duzia: 12 };
 
-        // --- UTILITÁRIOS ---
-        function formatLastUpdate(timestamp) {
-            if (!timestamp) return 'Nunca';
-            return new Date(timestamp).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-        }
+// ---------------- Ícones (SVG inline, funcionam offline) ----------------
+const P = {
+  bag: '<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>',
+  cog: '<path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>', check: '<path d="M20 6 9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  mic: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/>',
+  micoff: '<path d="m2 2 20 20"/><path d="M18.9 13A7 7 0 0 0 19 12v-2M5 10v2a7 7 0 0 0 12 5M15 9.3V5a3 3 0 0 0-5.7-1.3M9 9v3a3 3 0 0 0 5.1 2.1M12 19v3"/>',
+  back: '<path d="m15 18-6-6 6-6"/>', trash: '<path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/>',
+  alert: '<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>',
+  send: '<path d="M5 12h14M13 6l6 6-6 6"/>', note: '<path d="M4 6h16M4 12h16M4 18h10"/>',
+  wifioff: '<path d="m2 2 20 20M8.5 16.5a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.6M10.7 5.1A15 15 0 0 1 22 8.8M5 12.9a10 10 0 0 1 5.2-2.7M19 12.9a10 10 0 0 0-2.4-1.9M12 20h.01"/>'
+};
+const icon = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
 
-        function parseVoiceItem(text) {
-            if (!text) return { name: '', qty: 1 };
-            const words = text.trim().split(' ');
-            if (words.length === 0) return { name: '', qty: 1 };
-            const firstWord = words[0].toLowerCase();
-            let qty = 1; let nameStartIndex = 0;
-            if (!isNaN(firstWord)) { qty = parseInt(firstWord); nameStartIndex = 1; } 
-            else if (NUMBER_WORD_MAP[firstWord]) { qty = NUMBER_WORD_MAP[firstWord]; nameStartIndex = 1; }
-            let name = words.slice(nameStartIndex).join(' ');
-            return { name, qty };
-        }
+// ---------------- Utilitários ----------------
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (id) => document.getElementById(id);
+const isSpecific = () => state.view !== 'dashboard' && state.view !== 'all';
+const storeById = (id) => state.stores.find(s => s.id === id);
+const storeOf = (item) => storeById(item.supermarket) || null;
+const inView = (item, view) => view === 'all' || view === 'dashboard' ? true : view === 'geral' ? !storeOf(item) : item.supermarket === view;
+const countOpen = (view) => state.items.filter(i => !i.isBought && inView(i, view)).length;
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-        async function updateGlobalTimestamp() {
-            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_metadata', 'status');
-            try { await updateDoc(metaRef, { lastUpdated: Date.now() }); } 
-            catch (err) { 
-                 if (err.code === 'not-found') {
-                    const { setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
-                    await setDoc(metaRef, { lastUpdated: Date.now() });
-                 }
-            }
-        }
+function fmtUpdate(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
 
-        // --- LÓGICA FIREBASE ---
-        async function initAuth() {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        }
+function parseVoiceItem(text) {
+  const words = (text || '').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return { name: '', qty: 1 };
+  const w0 = words[0].toLowerCase();
+  let qty = 1, start = 0;
+  if (/^\d+$/.test(w0)) { qty = parseInt(w0, 10); start = 1; }
+  else if ((w0 === 'meia' || w0 === 'meio') && /^d[uú]zia$/i.test(words[1] || '')) { qty = 6; start = 2; }
+  else if (w0 === 'meia' || w0 === 'meio') { qty = 6; start = 1; }
+  else if (NUMBER_WORDS[w0]) { qty = NUMBER_WORDS[w0]; start = 1; }
+  if (/^de$/i.test(words[start] || '') && start > 0) start++;
+  return { name: words.slice(start).join(' '), qty: Math.max(1, qty) };
+}
 
-        function setupListeners() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), (snapshot) => {
-                const loadedItems = snapshot.docs.map(doc => ({ id: doc.id, supermarket: 'geral', ...doc.data() }));
-                loadedItems.sort((a, b) => {
-                    if (a.isBought === b.isBought) return b.createdAt - a.createdAt;
-                    return a.isBought ? 1 : -1;
-                });
-                state.items = loadedItems;
-                render();
-            });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores'), (snapshot) => {
-                const loadedStores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                loadedStores.sort((a, b) => a.name.localeCompare(b.name));
-                state.stores = loadedStores;
-                state.loading = false;
-                render();
-            });
-            onSnapshot(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_metadata', 'status'), (snapshot) => {
-                if (snapshot.exists()) { state.lastUpdate = snapshot.data().lastUpdated; render(); }
-            });
-        }
+let toastTimer;
+function toast(msg, opts = {}) {
+  clearTimeout(toastTimer);
+  const el = $('toast');
+  el.innerHTML = `<div class="toast ${opts.error ? 'err' : ''}" role="status"><span>${esc(msg)}</span>${opts.undo ? '<button data-act="undo">Anular</button>' : ''}</div>`;
+  state.undo = opts.undo || null;
+  toastTimer = setTimeout(() => { el.innerHTML = ''; state.undo = null; }, opts.undo ? 6000 : 3000);
+}
+const fail = (e) => { console.error(e); toast('Sem ligação — a alteração fica guardada e sincroniza depois.', { error: true }); };
 
-        // --- AÇÕES ---
-        window.actions = {
-            navigate: (viewId) => { state.currentView = viewId; state.newItemStore = (viewId !== 'dashboard' && viewId !== 'all') ? viewId : 'geral'; render(); },
-            toggleEditMode: () => { state.isEditMode = !state.isEditMode; render(); },
-            openAddStoreModal: () => { state.modal = { type: 'store', data: { name: '', color: AVAILABLE_COLORS[0].class } }; render(); },
-            closeModal: () => { state.modal = { type: null, data: null }; render(); },
-            confirmDelete: (id, type) => { state.modal = { type: 'delete', data: { id, type } }; render(); },
-            addStore: async (name, color) => {
-                if (!name.trim()) return;
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores'), { name: name.trim(), color, createdAt: Date.now() });
-                state.modal = { type: null, data: null }; render();
-            },
-            addItem: async (e) => {
-                e.preventDefault(); const form = e.target; const name = form.name.value; const unit = form.unit.value;
-                let store = state.newItemStore;
-                if (state.currentView !== 'dashboard' && state.currentView !== 'all') { store = state.currentView; }
-                if (!name.trim()) return;
-                const submitBtn = form.querySelector('button[type="submit"]'); submitBtn.disabled = true;
-                try {
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), { name: name.trim(), quantity: 1, unit: unit, supermarket: store, note: '', isBought: false, createdAt: Date.now() });
-                    await updateGlobalTimestamp(); form.name.value = '';
-                } finally { submitBtn.disabled = false; form.name.focus(); }
-            },
-            addItemVoice: async (name, qty, store) => {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'dispensa_items'), { name: name.trim(), quantity: Number(qty), unit: 'unid', supermarket: store, note: '', isBought: false, createdAt: Date.now() });
-                await updateGlobalTimestamp();
-            },
-            toggleBought: async (id, currentStatus) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { isBought: !currentStatus }); },
-            updateQty: async (id, currentQty, delta) => { const newQty = Math.max(1, currentQty + delta); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { quantity: newQty }); await updateGlobalTimestamp(); },
-            updateNote: async (id, newNote) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id), { note: newNote }); await updateGlobalTimestamp(); },
-            executeDelete: async () => {
-                const { id, type } = state.modal.data;
-                try {
-                    const batch = writeBatch(db);
-                    if (type === 'cart') {
-                         const itemsToDelete = state.items.filter(i => i.isBought && (state.currentView === 'all' || i.supermarket === state.currentView));
-                         itemsToDelete.forEach(item => batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', item.id)));
-                    } else if (type === 'store') {
-                        batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_stores', id));
-                        const itemsToMigrate = state.items.filter(i => i.supermarket === id);
-                        itemsToMigrate.forEach(item => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', item.id), { supermarket: 'geral' }));
-                    } else if (type === 'item') {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'dispensa_items', id));
-                    }
-                    await batch.commit(); await updateGlobalTimestamp();
-                } finally { state.modal = { type: null, data: null }; render(); }
-            },
-            toggleVoice: () => {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRecognition) { alert("O teu browser não suporta voz."); return; }
-                if (state.isListening) { state.recognition.stop(); state.isListening = false; render(); return; }
-                const recognition = new SpeechRecognition(); recognition.lang = 'pt-PT'; recognition.continuous = true; 
-                recognition.onstart = () => { state.isListening = true; render(); };
-                recognition.onend = () => { state.isListening = false; render(); };
-                recognition.onresult = (event) => {
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) {
-                            const transcript = event.results[i][0].transcript;
-                            const rawItems = transcript.split(/ e |,| e,/i);
-                            const storeContext = (state.currentView !== 'dashboard' && state.currentView !== 'all') ? state.currentView : 'geral';
-                            rawItems.forEach(rawItem => {
-                                let cleanRaw = rawItem.trim();
-                                if (cleanRaw.length > 0) {
-                                    const { name, qty } = parseVoiceItem(cleanRaw);
-                                    if (name && name.length > 0) {
-                                        const finalName = name.charAt(0).toUpperCase() + name.slice(1).replace(/[.]+$/, "");
-                                        window.actions.addItemVoice(finalName, qty, storeContext);
-                                    }
-                                }
-                            });
-                        }
-                    }
-                };
-                state.recognition = recognition; recognition.start();
-            },
-            setNewItemStore: (storeId) => { state.newItemStore = storeId; render(); }
-        };
+// ---------------- Ligação ao Firebase ----------------
+async function touch() {
+  try { await setDoc(metaDoc(), { lastUpdated: Date.now() }, { merge: true }); } catch (e) { /* offline: sincroniza depois */ }
+}
 
-        // --- LÓGICA DE RENDERIZAÇÃO ---
-        function render() {
-            const app = document.getElementById('app');
-            const modalContainer = document.getElementById('modal-container');
-            if (state.modal.type) renderModal(modalContainer); else modalContainer.innerHTML = '';
-            if (state.loading) { app.innerHTML = `<div class="flex h-screen items-center justify-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div></div>`; return; }
-            if (state.currentView === 'dashboard') renderDashboard(app); else renderList(app);
-            lucide.createIcons();
-        }
+function listen() {
+  onSnapshot(itemsCol(), (snap) => {
+    state.items = snap.docs.map(d => ({ id: d.id, supermarket: 'geral', quantity: 1, unit: 'unid', note: '', isBought: false, createdAt: 0, ...d.data() }))
+      .sort((a, b) => (a.isBought === b.isBought) ? (b.createdAt || 0) - (a.createdAt || 0) : (a.isBought ? 1 : -1));
+    state.itemsReady = true; state.loading = !(state.itemsReady && state.storesReady); render();
+  }, (e) => { console.error(e); toast('Erro a carregar a lista.', { error: true }); });
+  onSnapshot(storesCol(), (snap) => {
+    state.stores = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => String(a.name).localeCompare(String(b.name), 'pt'));
+    state.storesReady = true; state.loading = !(state.itemsReady && state.storesReady); render();
+  }, (e) => console.error(e));
+  onSnapshot(metaDoc(), (snap) => { if (snap.exists()) { state.lastUpdate = snap.data().lastUpdated; renderHeader(); } }, () => {});
+}
 
-        function getCount(storeId) {
-            if (storeId === 'all') return state.items.filter(i => !i.isBought).length;
-            if (storeId === 'geral') return state.items.filter(i => !i.isBought && (i.supermarket === 'geral' || !state.stores.find(s => s.id === i.supermarket))).length;
-            return state.items.filter(i => !i.isBought && i.supermarket === storeId).length;
-        }
+// ---------------- Ações ----------------
+// Semáforos da partida: coluna k acende em 0.5s + 0.6s*k; apagam todos aos 4.6s; voltam acesos aos 5.2s
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let lightsTimer;
+function lightsState() {
+  const el = (Date.now() - (state.lightsStart || 0)) / 1000;
+  if (reduceMotion || el >= 5.2) return { seq: false, n: 5 };
+  if (el >= 4.6) return { seq: true, n: 0 };
+  return { seq: true, n: Math.max(0, Math.min(5, Math.floor((el - 0.5) / 0.6) + 1)) };
+}
+function paintLights() {
+  const box = document.querySelector('.lights'); const L = lightsState();
+  if (box) { box.classList.toggle('seq', L.seq); box.querySelectorAll('i').forEach((p, k) => p.classList.toggle('on', k < L.n)); }
+  if (!L.seq) { clearInterval(lightsTimer); lightsTimer = null; }
+}
+function startLights() {
+  state.lightsStart = Date.now(); clearInterval(lightsTimer);
+  lightsTimer = setInterval(paintLights, 60);
+}
 
-        function renderDashboard(container) {
-            const totalCount = getCount('all'); const geralCount = getCount('geral');
-            let storesHtml = state.stores.map(store => {
-                const count = getCount(store.id);
-                return `<div class="relative group">
-                    <button onclick="actions.navigate('${store.id}')" class="w-full relative p-4 rounded-2xl shadow-sm border transition-all active:scale-[0.98] flex flex-col items-start justify-between h-32 bg-white border-slate-200 hover:border-emerald-200 text-left">
-                        <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md text-white shadow-sm ${store.color}">${store.name}</span>${count > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-slate-100 text-slate-600">${count}</span>` : ''}</div>
-                        <div class="mt-auto w-full"><p class="text-${count === 0 ? 'xs text-slate-300' : 'sm font-medium text-slate-600'}">${count === 0 ? 'Tudo comprado' : `${count} ${count === 1 ? 'item' : 'itens'}`}</p></div>
-                    </button>
-                    ${state.isEditMode ? `<button onclick="event.stopPropagation(); actions.confirmDelete('${store.id}', 'store')" class="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-md hover:bg-red-600 z-10 scale-in"><i data-lucide="x" class="w-4 h-4"></i></button>` : ''}
-                </div>`;
-            }).join('');
+const getTheme = () => document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('dispensa-theme', t); } catch (e) {}
+  const tc = document.getElementById('tc'); if (tc) tc.setAttribute('content', t === 'dark' ? '#050816' : '#eef1f8');
+}
+const themeBtn = () => `<button class="ibtn" data-act="theme" aria-label="${getTheme() === 'dark' ? 'Mudar para vista clara' : 'Mudar para vista escura'}">${icon(getTheme() === 'dark' ? 'sun' : 'moon')}</button>`;
 
-            container.innerHTML = `
-                <header class="bg-white border-b border-emerald-100 p-4 sticky top-0 z-10 fade-in select-none">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <div class="bg-emerald-100 p-2 rounded-lg"><i data-lucide="shopping-bag" class="w-6 h-6 text-emerald-600"></i></div>
-                            <div><h1 class="text-xl font-bold text-slate-800">Olá, Ricardo!</h1><p class="text-xs text-slate-500">Vamos às compras?</p></div>
-                        </div>
-                        <button onclick="actions.toggleEditMode()" class="p-2 rounded-full transition-colors ${state.isEditMode ? 'bg-slate-200 text-slate-800' : 'text-slate-400 hover:bg-slate-100'}"><i data-lucide="settings" class="w-5 h-5"></i></button>
-                    </div>
-                </header>
-                <main class="p-4 fade-in">
-                    ${state.isEditMode ? `<div class="mb-4 bg-yellow-50 border border-yellow-200 p-3 rounded-lg text-xs text-yellow-800 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Modo de edição: Podes apagar lojas.</div>` : ''}
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="actions.navigate('all')" class="col-span-2 relative p-4 rounded-2xl shadow-sm border transition-all active:scale-[0.98] flex flex-col items-start justify-between h-28 bg-gradient-to-r from-slate-800 to-slate-700 text-white border-transparent">
-                            <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md bg-white/20">Toda a Lista</span>${totalCount > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">${totalCount}</span>` : ''}</div>
-                            <p class="text-xs text-slate-300 mt-auto">${totalCount === 0 ? 'Tudo tranquilo' : 'Itens totais em falta'}</p>
-                        </button>
-                        ${storesHtml}
-                        <button onclick="actions.navigate('geral')" class="relative p-4 rounded-2xl shadow-sm border border-slate-200 transition-all active:scale-[0.98] flex flex-col items-start justify-between h-32 bg-slate-50 hover:bg-white">
-                            <div class="flex w-full justify-between items-start"><span class="text-sm font-bold px-2 py-1 rounded-md bg-slate-200 text-slate-600">Geral / Outros</span>${geralCount > 0 ? `<span class="text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-600">${geralCount}</span>` : ''}</div>
-                            <p class="text-xs text-slate-400 mt-auto">Itens sem loja definida</p>
-                        </button>
-                        <button onclick="actions.openAddStoreModal()" class="relative p-4 rounded-2xl border-2 border-dashed border-slate-300 transition-all active:scale-[0.95] flex flex-col items-center justify-center h-32 text-slate-400 hover:text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50/50"><i data-lucide="plus" class="w-8 h-8 mb-2"></i><span class="text-xs font-bold">Adicionar Loja</span></button>
-                    </div>
-                </main>`;
-        }
+const A = {
+  theme() { applyTheme(getTheme() === 'dark' ? 'light' : 'dark'); renderHeader(); },
+  nav(view, push = true) {
+    state.view = view; state.expanded = null;
+    if (view === 'dashboard') startLights();
+    state.newItemStore = (view !== 'dashboard' && view !== 'all') ? view : 'geral';
+    if (push) history.pushState({ view }, '');
+    window.scrollTo(0, 0); render(true);
+  },
+  back() { if (history.state && history.state.view && history.state.view !== 'dashboard') history.back(); else A.nav('dashboard', false); },
+  edit() { state.edit = !state.edit; render(); },
+  openStore() { state.modal = { type: 'store', color: COLORS[0].cls }; renderModal(); setTimeout(() => document.querySelector('#modal input[name=storeName]')?.focus(), 50); },
+  close() { state.modal = null; renderModal(); },
+  askDelete(type, id) { state.modal = { type: 'delete', kind: type, id }; renderModal(); },
+  pickColor(cls) { state.modal.color = cls; document.querySelectorAll('.sw').forEach(b => b.classList.toggle('sel', b.dataset.cls === cls)); },
+  expand(id) { state.expanded = state.expanded === id ? null : id; renderMain(true); },
+  setStore(id) { state.newItemStore = id; renderComposer(true); },
 
-        function renderList(container) {
-            let currentStoreInfo = { label: 'Toda a Lista', color: 'bg-slate-800' };
-            if (state.currentView === 'geral') currentStoreInfo = { label: 'Geral / Outros', color: 'bg-slate-500' };
-            else if (state.currentView !== 'all') { const s = state.stores.find(st => st.id === state.currentView); if (s) currentStoreInfo = { label: s.name, color: s.color }; }
-            const displayedItems = state.items.filter(item => {
-                if (state.currentView === 'all') return true;
-                if (state.currentView === 'geral') { const storeExists = state.stores.find(s => s.id === item.supermarket); return item.supermarket === 'geral' || !storeExists; }
-                return item.supermarket === state.currentView;
-            });
-            const activeItems = displayedItems.filter(i => !i.isBought);
-            const boughtItems = displayedItems.filter(i => i.isBought);
+  saveStore(form) {
+    const name = form.storeName.value.trim(); if (!name) { form.storeName.focus(); return; }
+    addDoc(storesCol(), { name, color: state.modal.color, createdAt: Date.now() }).catch(fail);
+    A.close();
+  },
+  addItem(form) {
+    const input = form.elements.name; const name = input.value.trim(); if (!name) { input.focus(); return; }
+    const unit = form.elements.unit.value; state.unit = unit;
+    const supermarket = isSpecific() ? state.view : state.newItemStore;
+    addDoc(itemsCol(), { name, quantity: 1, unit, supermarket, note: '', isBought: false, createdAt: Date.now() }).then(touch).catch(fail);
+    input.value = ''; input.focus();
+  },
+  addVoice(name, qty, supermarket) {
+    addDoc(itemsCol(), { name, quantity: qty, unit: 'unid', supermarket, note: '', isBought: false, createdAt: Date.now() }).then(touch).catch(fail);
+  },
+  toggle(id) { const it = state.items.find(i => i.id === id); if (!it) return; updateDoc(itemDoc(id), { isBought: !it.isBought }).then(touch).catch(fail); },
+  qty(id, delta) { const it = state.items.find(i => i.id === id); if (!it) return; updateDoc(itemDoc(id), { quantity: Math.max(1, (Number(it.quantity) || 1) + delta) }).then(touch).catch(fail); },
+  note(id, value) { const it = state.items.find(i => i.id === id); if (!it || (it.note || '') === value) return; updateDoc(itemDoc(id), { note: value }).then(touch).catch(fail); },
+  removeItem(id) {
+    const it = state.items.find(i => i.id === id); if (!it) return;
+    const { id: _id, ...data } = it; state.expanded = null;
+    deleteDoc(itemDoc(id)).then(touch).catch(fail);
+    toast(`"${it.name}" removido`, { undo: () => setDoc(itemDoc(id), data).then(touch).catch(fail) });
+  },
+  async confirmDelete() {
+    const { kind, id } = state.modal; state.modal = null; renderModal();
+    try {
+      const ops = [];
+      if (kind === 'cart') state.items.filter(i => i.isBought && inView(i, state.view)).forEach(i => ops.push(b => b.delete(itemDoc(i.id))));
+      else if (kind === 'store') {
+        ops.push(b => b.delete(storeDoc(id)));
+        state.items.filter(i => i.supermarket === id).forEach(i => ops.push(b => b.update(itemDoc(i.id), { supermarket: 'geral' })));
+      }
+      for (let i = 0; i < ops.length; i += 400) { const b = writeBatch(db); ops.slice(i, i + 400).forEach(f => f(b)); b.commit().catch(fail); }
+      touch();
+    } catch (e) { fail(e); }
+  },
+  voice() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { toast('Este browser não suporta voz.', { error: true }); return; }
+    if (state.listening) { state.recognition?.stop(); return; }
+    const rec = new SR(); rec.lang = 'pt-PT'; rec.continuous = true; rec.interimResults = false;
+    rec.onstart = () => { state.listening = true; renderComposer(true); };
+    rec.onend = () => { state.listening = false; renderComposer(true); };
+    rec.onerror = (e) => { if (e.error === 'not-allowed') toast('Permite o acesso ao microfone.', { error: true }); };
+    rec.onresult = (ev) => {
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        if (!ev.results[i].isFinal) continue;
+        const target = isSpecific() ? state.view : 'geral';
+        ev.results[i][0].transcript.split(/ e |,/i).forEach(part => {
+          const { name, qty } = parseVoiceItem(part);
+          if (name) A.addVoice(cap(name.replace(/[.]+$/, '')), qty, target);
+        });
+      }
+    };
+    state.recognition = rec; rec.start();
+  }
+};
 
-            const itemsHtml = displayedItems.length === 0 ? `<div class="text-center py-12 opacity-40"><i data-lucide="shopping-cart" class="w-16 h-16 mx-auto mb-3 text-slate-300"></i><p class="text-slate-500 font-medium">Lista vazia.</p></div>` 
-            : displayedItems.map(item => {
-                let itemStore = state.stores.find(s => s.id === item.supermarket); let storeLabel = itemStore ? itemStore.name : 'Geral'; let storeColor = itemStore ? itemStore.color : 'bg-slate-400';
-                return `<div class="group relative bg-white rounded-xl border transition-all duration-300 ${item.isBought ? 'border-slate-100 bg-slate-50 opacity-60' : 'border-slate-200 shadow-sm'}">
-                    <div class="flex items-center p-3 gap-3">
-                        <button onclick="actions.toggleBought('${item.id}', ${item.isBought})" class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${item.isBought ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-emerald-400'}">${item.isBought ? '<i data-lucide="check" class="w-3 h-3"></i>' : ''}</button>
-                        <div class="flex-1 min-w-0"><div class="flex flex-col"><span class="font-bold truncate ${item.isBought ? 'text-slate-500 line-through' : 'text-slate-800'}">${item.name}</span>${state.currentView === 'all' ? `<span class="text-[9px] w-max px-1.5 py-0.5 rounded-md mt-0.5 text-white/90 ${storeColor}">${storeLabel}</span>` : ''}</div></div>
-                        <div class="flex items-center bg-slate-100 rounded-lg p-1 gap-2">
-                            <button onclick="actions.updateQty('${item.id}', ${item.quantity}, -1)" ${item.isBought ? 'disabled' : ''} class="w-6 h-6 flex items-center justify-center rounded bg-white text-slate-600 shadow-sm disabled:opacity-50"><i data-lucide="minus" class="w-3 h-3"></i></button>
-                            <span class="text-xs font-bold w-8 text-center text-slate-700">${item.quantity}<span class="text-[9px] font-normal uppercase text-slate-400 ml-0.5">${item.unit}</span></span>
-                            <button onclick="actions.updateQty('${item.id}', ${item.quantity}, 1)" ${item.isBought ? 'disabled' : ''} class="w-6 h-6 flex items-center justify-center rounded bg-white text-emerald-600 shadow-sm disabled:opacity-50"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                        </div>
-                    </div>
-                    <div class="px-3 pb-3 pl-12"><div class="flex items-center gap-2 text-slate-400"><i data-lucide="align-left" class="w-3 h-3"></i><input type="text" value="${item.note}" placeholder="Nota..." onblur="if(this.value !== '${item.note}') actions.updateNote('${item.id}', this.value)" ${item.isBought ? 'disabled' : ''} class="w-full bg-transparent text-xs outline-none border-b border-dashed border-slate-200 focus:border-emerald-300 py-0.5 text-slate-600"></div></div>
-                    <button onclick="actions.confirmDelete('${item.id}', 'item')" class="absolute -top-2 -right-2 bg-red-100 text-red-500 rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm cursor-pointer"><i data-lucide="x" class="w-3 h-3"></i></button>
-                </div>`;
-            }).join('');
+// ---------------- Renderização ----------------
+let lastComposerKey = '';
+function render(forceComposer) {
+  renderHeader(); renderMain(); renderComposer(forceComposer); renderModal();
+}
 
-            const storeSelectorHtml = (state.currentView === 'all' && !state.isListening) ? `<div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar pt-2"><button type="button" onclick="actions.setNewItemStore('geral')" class="text-[10px] px-3 py-1 rounded-full whitespace-nowrap border transition-colors ${state.newItemStore === 'geral' ? 'bg-slate-500 text-white border-transparent' : 'bg-slate-50 border-slate-200 text-slate-500'}">Geral</button>${state.stores.map(s => `<button type="button" onclick="actions.setNewItemStore('${s.id}')" class="text-[10px] px-3 py-1 rounded-full whitespace-nowrap border transition-colors ${state.newItemStore === s.id ? s.color + ' text-white border-transparent' : 'bg-slate-50 border-slate-200 text-slate-500'}">${s.name}</button>`).join('')}</div>` : '';
+function renderHeader() {
+  const el = $('hdr');
+  const offline = !state.online ? `<div class="offline">${icon('wifioff')} Sem ligação — a trabalhar offline</div>` : '';
+  if (state.loading) { el.innerHTML = ''; return; }
+  if (state.view === 'dashboard') {
+    el.innerHTML = `<div class="hdr"><div class="hdr-row">
+      <img class="logo" src="icon-192.png" alt="">
+      <div class="grow"><h1>Olá, <em>Ricardo</em>!</h1><p>${state.lastUpdate ? 'Atualizado ' + esc(fmtUpdate(state.lastUpdate)) : 'Pronto para a corrida?'}</p></div>
+      ${themeBtn()}<button class="ibtn ${state.edit ? 'on' : ''}" data-act="edit" aria-label="Editar lojas">${icon(state.edit ? 'check' : 'edit')}</button></div>${offline}</div>`;
+    return;
+  }
+  let label = 'Toda a lista', hex = '#0f9d6b';
+  if (state.view === 'geral') { label = 'Geral / Outros'; hex = GENERAL_HEX; }
+  else if (state.view !== 'all') { const s = storeById(state.view); if (s) { label = s.name; hex = colorHex(s.color); } }
+  const scope = state.items.filter(i => inView(i, state.view));
+  const done = scope.filter(i => i.isBought).length;
+  const pct = scope.length ? Math.round(done / scope.length * 100) : 0;
+  el.innerHTML = `<div class="hdr"><div class="hdr-row">
+    <button class="ibtn" data-act="back" aria-label="Voltar">${icon('back')}</button>
+    <div class="grow"><h1>${esc(label)}</h1><p>${scope.length - done} por comprar${done ? ` · ${done} no carrinho` : ''}</p></div>
+    ${state.view !== 'all' ? `<span class="dot" style="background:${hex}"></span>` : ''}${themeBtn()}</div>
+    <div class="progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>${offline}</div>`;
+}
 
-            container.innerHTML = `
-                <header class="bg-white border-b border-emerald-100 sticky top-0 z-10 shadow-sm fade-in select-none">
-                    <div class="max-w-md mx-auto px-4 py-3">
-                        <div class="flex items-center gap-3">
-                            <button onclick="actions.navigate('dashboard')" class="p-2 -ml-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
-                            <div class="flex-1"><h1 class="text-lg font-bold text-slate-800 leading-none flex items-center gap-2">${currentStoreInfo.label}</h1><p class="text-xs text-slate-500 font-medium">${activeItems.length} por comprar</p></div>
-                            ${state.currentView !== 'all' ? `<div class="w-3 h-3 rounded-full ${currentStoreInfo.color.split(' ')[0]}"></div>` : ''}
-                        </div>
-                    </div>
-                    ${state.isListening ? `<div class="bg-red-500 text-white text-xs font-bold py-1 px-4 text-center animate-pulse flex items-center justify-center gap-2"><i data-lucide="activity" class="w-3 h-3 animate-bounce"></i> Diz "2 Leites..."</div>` : ''}
-                </header>
-                <main class="p-4 space-y-5 fade-in">
-                    <form onsubmit="actions.addItem(event)" class="bg-white p-3 rounded-2xl shadow-sm border transition-all ${state.isListening ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-200 ring-1 ring-slate-100'}">
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-center gap-2">
-                                <div class="flex-1 relative flex items-center">
-                                    <input type="text" name="name" placeholder="${state.isListening ? "A ouvir..." : "O que falta comprar?"}" autocomplete="off" ${state.isListening ? 'disabled' : ''} class="w-full bg-transparent outline-none text-slate-800 placeholder:text-slate-400 font-medium pr-10">
-                                    <button type="button" onclick="actions.toggleVoice()" class="absolute right-0 p-2 rounded-full transition-all flex items-center justify-center ${state.isListening ? 'bg-red-500 text-white' : 'text-slate-400 hover:text-emerald-600'}">${state.isListening ? '<i data-lucide="mic-off" class="w-4 h-4"></i>' : '<i data-lucide="mic" class="w-4 h-4"></i>'}</button>
-                                </div>
-                                <select name="unit" class="bg-slate-50 text-xs font-bold text-slate-500 rounded-lg px-2 py-1.5 outline-none border border-slate-200"><option value="unid">Unid</option><option value="emb">Emb</option><option value="kg">Kg</option></select>
-                            </div>
-                            ${storeSelectorHtml}
-                        </div>
-                        ${!state.isListening ? `<button type="submit" class="w-full mt-2 bg-slate-900 text-white py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-[0.98] transition-all"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar</button>` : ''}
-                    </form>
-                    <div class="space-y-3 pb-20">${itemsHtml}</div>
-                </main>
-                ${boughtItems.length > 0 ? `<div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 fade-in"><div class="max-w-md mx-auto"><button onclick="actions.confirmDelete(null, 'cart')" class="w-full bg-red-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-200 active:scale-[0.98] transition-transform hover:bg-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i> Limpar ${boughtItems.length} Comprados</button></div></div>` : ''}`;
-        }
+function renderMain(force) {
+  const el = $('main');
+  if (state.loading) { el.innerHTML = '<div class="loading"><div class="spin"></div></div>'; return; }
+  // Não destruir o campo de nota enquanto se escreve
+  const ae = document.activeElement;
+  if (!force && ae && ae.matches && ae.matches('#main input')) { state.pendingRender = true; return; }
+  state.pendingRender = false;
+  el.innerHTML = '<main>' + (state.view === 'dashboard' ? dashboardHtml() : listHtml()) + '</main>';
+}
 
-        function renderModal(container) {
-            const { type, data } = state.modal;
-            if (type === 'store') {
-                container.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in"><div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-xl animate-in scale-in">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">Nova Loja</h3>
-                    <form onsubmit="event.preventDefault(); actions.addStore(this.storeName.value, this.storeColor.value)"><div><label class="text-xs font-bold text-slate-500 uppercase">Nome</label><input name="storeName" type="text" placeholder="Ex: Talho..." class="w-full mt-1 p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 transition-colors" autoFocus></div><div class="mt-4"><label class="text-xs font-bold text-slate-500 uppercase">Cor</label><div class="grid grid-cols-6 gap-2 mt-2">${AVAILABLE_COLORS.map(c => `<button type="button" onclick="this.form.storeColor.value = '${c.class}'; document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'ring-slate-400', 'scale-110')); this.classList.add('ring-2', 'ring-offset-2', 'ring-slate-400', 'scale-110')" class="color-btn w-8 h-8 rounded-full ${c.class} transition-transform hover:scale-110 ${c.class === AVAILABLE_COLORS[0].class ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : ''}"></button>`).join('')}</div><input type="hidden" name="storeColor" value="${AVAILABLE_COLORS[0].class}"></div><div class="flex gap-3 mt-6"><button type="button" onclick="actions.closeModal()" class="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100">Cancelar</button><button type="submit" class="flex-1 py-3 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800">Criar</button></div></form></div></div>`;
-            } else if (type === 'delete') {
-                const isCart = data.type === 'cart'; const isStore = data.type === 'store';
-                container.innerHTML = `<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in"><div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-in scale-in"><div class="flex flex-col items-center text-center gap-4"><div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center"><i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i></div><div><h3 class="text-lg font-bold text-slate-800">${isCart ? 'Limpar Carrinho?' : isStore ? 'Apagar Loja?' : 'Apagar Item?'}</h3><p class="text-sm text-slate-500 mt-1">${isCart ? 'Vais remover os itens comprados.' : isStore ? 'A loja será removida, os itens passam para Geral.' : 'Esta ação é irreversível.'}</p></div><div class="flex gap-3 w-full mt-2"><button onclick="actions.closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 font-semibold text-slate-600 hover:bg-slate-50">Cancelar</button><button onclick="actions.executeDelete()" class="flex-1 py-2.5 rounded-xl bg-red-500 font-semibold text-white hover:bg-red-600 shadow-md shadow-red-200">Apagar</button></div></div></div></div>`;
-            }
-            lucide.createIcons();
-        }
+function dashboardHtml() {
+  if (!state.lightsStart) startLights();
+  const L = lightsState();
+  const open = countOpen('all'), total = state.items.length, done = total - open;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const tiles = state.stores.map((s, i) => {
+    const n = countOpen(s.id), hex = colorHex(s.color);
+    return `<div class="tile-wrap">
+      <button class="tile" style="--c:${hex};animation-delay:${i * 30}ms" data-act="nav" data-view="${esc(s.id)}">
+        <span class="wm">${i + 1}</span>
+        <div class="top"><div class="corner"><b>${esc((s.name || '?').trim().charAt(0).toUpperCase())}</b><i>P${i + 1}</i></div>${n ? `<span class="count">${n}</span>` : ''}</div>
+        <div><div class="name">${esc(s.name)}</div><div class="meta ${n ? '' : 'ok'}">${n ? `${n} ${n === 1 ? 'item' : 'itens'}` : 'Tudo comprado 🏁'}</div></div>
+      </button>
+      ${state.edit ? `<button class="del-badge" data-act="askDelete" data-kind="store" data-id="${esc(s.id)}" aria-label="Apagar ${esc(s.name)}">${icon('x')}</button>` : ''}
+    </div>`;
+  }).join('');
+  const g = countOpen('geral');
+  return `
+    ${state.edit ? `<div class="hint">${icon('alert')} Modo de edição: toca no ✕ para apagar uma loja.</div>` : ''}
+    <button class="hero" data-act="nav" data-view="all">
+      <div class="lights ${L.seq ? 'seq' : ''}" aria-hidden="true">${[0, 1, 2, 3, 4].map(k => `<i class="${k < L.n ? 'on' : ''}"></i>`).join('')}</div>
+      <small>Em falta</small>
+      <div class="big"><b>${open}</b><span>${open === 1 ? 'item' : 'itens'} por comprar</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="sub">${total ? `${done} de ${total} no carrinho` : 'A lista está vazia'} · ver toda a lista</div>
+    </button>
+    <div class="sec b"><h2>Lojas</h2></div>
+    <div class="grid">
+      ${tiles}
+      <div class="tile-wrap"><button class="tile" style="--c:${GENERAL_HEX}" data-act="nav" data-view="geral">
+        <span class="wm">//</span>
+        <div class="top"><div class="corner"><b>G</b><i>PIT</i></div>${g ? `<span class="count">${g}</span>` : ''}</div>
+        <div><div class="name">Geral / Outros</div><div class="meta">Sem loja definida</div></div></button></div>
+      <div class="tile-wrap"><button class="tile dashed" data-act="openStore">${icon('plus')}Nova loja</button></div>
+    </div>`;
+}
 
-        onAuthStateChanged(auth, (user) => { state.user = user; if (user) setupListeners(); else initAuth(); });
-    </script>
+function itemHtml(it, showStore, i) {
+  const s = storeOf(it); const open = state.expanded === it.id;
+  const pill = showStore ? `<span class="pill" style="background:${s ? colorHex(s.color) : GENERAL_HEX}">${esc(s ? s.name : 'Geral')}</span>` : '';
+  const note = it.note ? `<span>${icon('note')} ${esc(it.note)}</span>` : '';
+  return `<div class="item ${it.isBought ? 'done' : ''}" style="--c:${s ? colorHex(s.color) : GENERAL_HEX};animation-delay:${Math.min(i, 12) * 20}ms">
+    <div class="item-row">
+      <button class="chk" data-act="toggle" data-id="${esc(it.id)}" aria-label="${it.isBought ? 'Desmarcar' : 'Marcar como comprado'}">${icon('check')}</button>
+      <div class="body" data-act="expand" data-id="${esc(it.id)}"><div class="iname">${esc(it.name)}</div>${pill || note ? `<div class="imeta">${pill}${open ? '' : note}</div>` : ''}</div>
+      <div class="qty">
+        <button data-act="qty" data-id="${esc(it.id)}" data-d="-1" ${it.isBought ? 'disabled' : ''} aria-label="Menos">${icon('minus')}</button>
+        <div class="v">${esc(it.quantity)}<small>${esc(it.unit)}</small></div>
+        <button class="plus" data-act="qty" data-id="${esc(it.id)}" data-d="1" ${it.isBought ? 'disabled' : ''} aria-label="Mais">${icon('plus')}</button>
+      </div>
+    </div>
+    ${open ? `<div class="detail"><input type="text" data-note="${esc(it.id)}" value="${esc(it.note)}" placeholder="Adicionar nota…" maxlength="200"><button class="rm" data-act="removeItem" data-id="${esc(it.id)}" aria-label="Apagar">${icon('trash')}</button></div>` : ''}
+  </div>`;
+}
+
+function listHtml() {
+  const items = state.items.filter(i => inView(i, state.view));
+  if (!items.length) return `<div class="empty"><div class="circle">${icon('cart')}</div><b>Lista vazia</b>Escreve ou diz o que falta comprar.</div>`;
+  const active = items.filter(i => !i.isBought), bought = items.filter(i => i.isBought);
+  const showStore = state.view === 'all';
+  let n = 0;
+  return (active.length ? `<div class="sec"><h2>Por comprar · ${active.length}</h2></div><div class="list">${active.map(i => itemHtml(i, showStore, n++)).join('')}</div>`
+      : `<div class="empty" style="padding:28px 20px"><div class="circle">${icon('check')}</div><b>Tudo comprado!</b>Bandeira de xadrez! Não falta nada aqui.</div>`)
+    + (bought.length ? `<div class="sec b"><h2>No carrinho · ${bought.length}</h2><button class="link" data-act="askDelete" data-kind="cart">Limpar</button></div><div class="list">${bought.map(i => itemHtml(i, showStore, n++)).join('')}</div>` : '');
+}
+
+function renderComposer(force) {
+  const el = $('composer');
+  if (state.loading) { el.innerHTML = ''; return; }
+  const showChips = !isSpecific();
+  const key = [state.view, state.listening, state.newItemStore, state.unit, state.stores.map(s => s.id + s.name + s.color).join('|')].join('#');
+  if (!force && key === lastComposerKey && el.firstChild) return;
+  lastComposerKey = key;
+  const prev = el.querySelector('input[name=name]'); const keep = prev ? prev.value : ''; const hadFocus = prev && document.activeElement === prev;
+  const chip = (id, label, hex) => { const sel = state.newItemStore === id; return `<button type="button" class="chip ${sel ? 'sel' : ''}" style="${sel ? `background:${hex}` : ''}" data-act="setStore" data-id="${esc(id)}">${esc(label)}</button>`; };
+  el.innerHTML = `<form class="composer ${state.listening ? 'listening' : ''}" data-form="add" autocomplete="off">
+    ${state.listening ? `<div class="listen-msg">${icon('mic')} A ouvir… diz “2 leites e pão”</div>` : ''}
+    <div class="crow">
+      <button type="button" class="mic ${state.listening ? 'on' : ''}" data-act="voice" aria-label="${state.listening ? 'Parar voz' : 'Adicionar por voz'}">${icon(state.listening ? 'micoff' : 'mic')}</button>
+      <div class="cin"><input type="text" name="name" placeholder="${state.listening ? 'A ouvir…' : 'O que falta comprar?'}" enterkeyhint="done" ${state.listening ? 'disabled' : ''}></div>
+      <button class="send" type="submit" aria-label="Adicionar" ${state.listening ? 'disabled' : ''}>${icon('plus')}</button>
+    </div>
+    <div class="opts">
+      <div class="seg" role="radiogroup" aria-label="Unidade">
+        ${['unid', 'emb', 'kg'].map(u => `<label><input type="radio" name="unit" value="${u}" ${state.unit === u ? 'checked' : ''}><span>${u === 'unid' ? 'Unid' : u === 'emb' ? 'Emb' : 'Kg'}</span></label>`).join('')}
+      </div>
+      ${showChips ? chip('geral', 'Geral', GENERAL_HEX) + state.stores.map(s => chip(s.id, s.name, colorHex(s.color))).join('') : ''}
+    </div></form>`;
+  const input = el.querySelector('input[name=name]');
+  if (input && keep) input.value = keep;
+  if (input && hadFocus) input.focus();
+  const comp = el.firstElementChild; const h = comp ? comp.offsetHeight : 150;
+  document.querySelector('main') && (document.querySelector('main').style.paddingBottom = `${h + 40}px`);
+  document.documentElement.style.setProperty('--comp-h', h + 'px');
+}
+
+function renderModal() {
+  const el = $('modal'); const m = state.modal;
+  if (!m) { el.innerHTML = ''; return; }
+  if (m.type === 'store') {
+    el.innerHTML = `<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>
+      <h3>Nova loja</h3><p>Cria um separador para organizar a lista.</p>
+      <form data-form="store">
+        <label class="lbl">Nome</label><input type="text" name="storeName" placeholder="Ex.: Talho, Farmácia…" maxlength="30" autocomplete="off">
+        <label class="lbl">Cor</label><div class="swatches">${COLORS.map(c => `<button type="button" class="sw ${c.cls === m.color ? 'sel' : ''}" data-act="color" data-cls="${c.cls}" style="background:${c.hex}" aria-label="${c.name}"></button>`).join('')}</div>
+        <div class="btns"><button type="button" class="btn" data-act="close">Cancelar</button><button type="submit" class="btn primary">Criar</button></div>
+      </form></div></div>`;
+  } else if (m.type === 'delete') {
+    const t = { cart: ['Limpar carrinho?', 'Vais remover os itens já comprados.', 'Limpar'], store: ['Apagar loja?', 'A loja é removida e os itens passam para “Geral”.', 'Apagar'] }[m.kind];
+    el.innerHTML = `<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true"><div class="grab"></div>
+      <div class="warn">${icon('alert')}</div><h3>${t[0]}</h3><p>${t[1]}</p>
+      <div class="btns"><button class="btn" data-act="close">Cancelar</button><button class="btn danger" data-act="confirmDelete">${t[2]}</button></div></div></div>`;
+  }
+}
+
+// ---------------- Eventos ----------------
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act]'); if (!t) return;
+  const act = t.dataset.act;
+  const ae = document.activeElement;
+  if (ae && ae.matches && ae.matches('#main input')) { ae.blur(); state.pendingRender = false; }
+  if (act === 'overlay') { if (e.target === t) A.close(); return; }
+  const { id, view, kind, cls, d } = t.dataset;
+  switch (act) {
+    case 'theme': A.theme(); break; case 'nav': A.nav(view); break; case 'back': A.back(); break; case 'edit': A.edit(); break;
+    case 'openStore': A.openStore(); break; case 'close': A.close(); break; case 'color': A.pickColor(cls); break;
+    case 'askDelete': A.askDelete(kind, id); break; case 'confirmDelete': A.confirmDelete(); break;
+    case 'toggle': A.toggle(id); break; case 'qty': A.qty(id, Number(d)); break; case 'expand': A.expand(id); break;
+    case 'removeItem': A.removeItem(id); break; case 'setStore': A.setStore(id); break; case 'voice': A.voice(); break;
+    case 'undo': if (state.undo) state.undo(); $('toast').innerHTML = ''; state.undo = null; break;
+  }
+});
+document.addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target;
+  if (f.dataset.form === 'add') A.addItem(f); else if (f.dataset.form === 'store') A.saveStore(f);
+});
+document.addEventListener('change', (e) => { if (e.target.dataset && e.target.dataset.note) A.note(e.target.dataset.note, e.target.value.trim()); });
+document.addEventListener('focusout', () => { setTimeout(() => { if (state.pendingRender && !document.activeElement?.matches?.('#main input')) renderMain(); }, 50); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.modal) A.close();
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('[data-note]')) e.target.blur();
+});
+window.addEventListener('popstate', (e) => A.nav((e.state && e.state.view) || 'dashboard', false));
+window.addEventListener('online', () => { state.online = true; renderHeader(); });
+window.addEventListener('offline', () => { state.online = false; renderHeader(); });
+window.addEventListener('resize', () => renderComposer(true));
+
+// ---------------- Arranque ----------------
+history.replaceState({ view: 'dashboard' }, '');
+async function initAuth() {
+  try {
+    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+    else await signInAnonymously(auth);
+  } catch (e) { console.error(e); toast('Não foi possível iniciar sessão.', { error: true }); }
+}
+let listening = false;
+onAuthStateChanged(auth, (user) => { if (user) { if (!listening) { listening = true; listen(); } } else initAuth(); });
+render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+</script>
 </body>
 </html>

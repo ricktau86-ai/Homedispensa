@@ -1,21 +1,18 @@
 {
+  "id": "./index.html",
   "name": "Dispensa do Ricardo",
   "short_name": "Dispensa",
+  "description": "Lista de compras partilhada, com voz e modo offline.",
+  "lang": "pt-PT",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#ffffff",
+  "background_color": "#eef1f8",
+  "theme_color": "#14214f",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
+    { "src": "icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ]
 }
